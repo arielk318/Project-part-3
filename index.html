@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <title>מחירון אריאל אסף</title>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Heebo', sans-serif;
+            background-color: #ffffff;
+            color: #000000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            direction: rtl;
+            text-align: right;
+            border: 10px double #004e92; /* מסגרת כחולה כפולה */
+        }
+        h1 {
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .car-animation {
+            width: 100%;
+            max-width: 400px;
+            height: 100px;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .car {
+            position: absolute;
+            left: -100px;
+            top: 20%; /* הגבהת האייקון ב-0.5 סנטימטר */
+            font-size: 80px;
+            color: black; /* צבע האייקון של המכונית */
+            animation: drive 3s linear infinite;
+        }
+        .road {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background-color: #555;
+        }
+        .lane {
+            position: absolute;
+            bottom: 2px;
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(to right, transparent 10%, #fff 10%, #fff 20%, transparent 20%);
+            background-size: 20px 100%;
+            animation: laneMove 1s linear infinite;
+        }
+        @keyframes drive {
+            from {
+                left: -100px;
+            }
+            to {
+                left: 100%;
+            }
+        }
+        @keyframes laneMove {
+            from {
+                background-position: 0 0;
+            }
+            to {
+                background-position: 20px 0;
+            }
+        }
+        .container {
+            background-color: rgba(0, 0, 0, 0.05);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(8.5px);
+            -webkit-backdrop-filter: blur(8.5px);
+            width: 100%;
+            max-width: 400px;
+        }
+        .highlighted-price {
+            font-size: 24px;
+            font-weight: bold;
+            background-color: #ffffff;
+            color: #000000;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+            width: 100%;
+            max-width: 300px;
+            border: 2px solid #004e92; /* מסגרת כחולה מסביב למחיר המשוער */
+        }
+        .ui-autocomplete {
+            max-height: 200px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            text-align: right;
+            background-color: #ffffff;
+        }
+        .ui-menu-item-wrapper {
+            padding: 8px 10px;
+            cursor: pointer;
+        }
+        .ui-menu-item-wrapper:hover {
+            background-color: #e0e0e0;
+        }
+        label {
+            display: block;
+            font-weight: 300;
+            margin-bottom: 5px;
+        }
+        input[type="text"] {
+            width: 100%;
+            max-width: 300px;
+            padding: 10px;
+            border: 1px solid #004e92;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            font-size: 16px;
+            text-align: right;
+        }
+        .error-message {
+            color: red;
+            font-size: 12px;
+            margin-bottom: 15px;
+        }
+        button {
+            background-color: #004e92;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #003366;
+        }
+        .radio-container {
+            margin-bottom: 15px;
+        }
+        .radio-container label {
+            margin-right: 10px;
+        }
+        .icon {
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>מחירון אריאל אסף</h1>
+    <div class="car-animation">
+        <i class="fas fa-car-side car"></i> <!-- שימוש באייקון של מכונית מהצד בצבע שחור -->
+        <div class="road">
+            <div class="lane"></div>
+        </div>
+    </div>
+    {% if prediction_text %}
+        <div class="highlighted-price">המחיר המשוער: {{ prediction_text }} ₪</div>
+    {% endif %}
+    <div class="container">
+        <h2>הזן את פרטי הרכב:</h2>
+        <form id="measurement-form" action="{{ url_for('predict') }}" method="post">
+            <label for="manufactor"><i class="fas fa-car icon"></i>יצרן:</label>
+            <input type="text" id="manufactor" name="manufactor" autocomplete="off"><br>
+
+            <label for="model"><i class="fas fa-car-side icon"></i>דגם:</label>
+            <input type="text" id="model" name="model" autocomplete="off"><br>
+
+            <label for="year"><i class="fas fa-calendar-alt icon"></i>שנה:</label>
+            <input type="text" id="year" name="Year" autocomplete="off">
+            <div id="year-error" class="error-message"></div>
+
+            <label for="hand"><i class="fas fa-hand-paper icon"></i>יד:</label>
+            <input type="text" id="hand" name="Hand" autocomplete="off">
+            <div id="hand-error" class="error-message"></div>
+
+            <label><i class="fas fa-cogs icon"></i>תיבת הילוכים:</label>
+            <div class="radio-container">
+                <label><input type="radio" name="Gear" value="אוטומטית"> אוטומטית</label>
+                <label><input type="radio" name="Gear" value="ידנית"> ידנית</label>
+                <label><input type="radio" name="Gear" value="רובוטית"> רובוטית</label>
+            </div>
+
+            <label for="capacity_Engine"><i class="fas fa-tachometer-alt icon"></i>נפח מנוע (סמ״ק):</label>
+            <input type="text" id="capacity_Engine" name="capacity_Engine" autocomplete="off">
+            <div id="capacity-error" class="error-message"></div>
+
+            <label><i class="fas fa-gas-pump icon"></i>סוג מנוע:</label>
+            <div class="radio-container">
+                <label><input type="radio" name="Engine_type" value="בנזין"> בנזין</label>
+                <label><input type="radio" name="Engine_type" value="סולר"> סולר</label>
+                <label><input type="radio" name="Engine_type" value="היברידי"> היברידי</label>
+                <label><input type="radio" name="Engine_type" value="חשמלי"> חשמלי</label>
+            </div>
+
+            <label for="pic_num"><i class="fas fa-camera icon"></i>מספר תמונות:</label>
+            <input type="text" id="pic_num" name="Pic_num" autocomplete="off"><br>
+
+            <label for="km"><i class="fas fa-road icon"></i>קילומטרז׳:</label>
+            <input type="text" id="km" name="Km" autocomplete="off">
+            <div id="km-error" class="error-message"></div>
+
+            <button type="submit">חיזוי מחיר</button>	
+        </form>
+
+        <div class="loading-animation" id="loading
+        <div class="loading-animation" id="loading-animation" style="display:none;">
+            <i class="fas fa-car-side car"></i> <!-- שימוש באייקון של מכונית מהצד בצבע שחור -->
+            <div class="road">
+                <div class="lane"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const modelsByManufacturer = {
+            "טויוטה": ["קורולה", "יאריס", "קאמרי"],
+            "יונדאי": ["i30", "סונטה", "אלנטרה"],
+            "קיה": ["ספורטאז'", "פיקנטו", "סול"],
+            "פורד": ["מונדאו", "מוסטנג", "פוקוס"],
+            "שברולט": ["מליבו", "אימפלה", "קרוז"],
+            "סובארו": ["אימפרזה", "פוסטר", "אאוטבק"],
+            "הונדה": ["סיוויק", "אקורד", "CR-V"],
+            "מרצדס": ["C-Class", "E-Class", "S-Class"],
+            "ב.מ.וו": ["סדרה 3", "סדרה 5", "סדרה 7"],
+            "אאודי": ["A3", "A4", "A6"]
+        };
+
+        function autocompleteInput(id, sourceArray) {
+            $("#" + id).autocomplete({
+                source: function(request, response) {
+                    const results = $.ui.autocomplete.filter(sourceArray, request.term);
+                    response(results.slice(0, 10));
+                },
+                minLength: 0,
+                delay: 0
+            }).focus(function() {
+                $(this).autocomplete("search", "");
+            });
+        }
+
+        function validateYear() {
+            const year = $("#year").val();
+            const currentYear = new Date().getFullYear();
+            if (isNaN(year) || year < 1900 || year > currentYear) {
+                $("#year-error").text("שנה לא תקינה. אנא הזן שנה בין 1900 ל-" + currentYear + ".");
+                return false;
+            } else {
+                $("#year-error").text("");
+                return true;
+            }
+        }
+
+        function validateHand() {
+            const hand = $("#hand").val();
+            if (isNaN(hand) || hand < 0 || hand > 10) {
+                $("#hand-error").text("אנא הזן מספר בין 0 ל-10.");
+                return false;
+            } else {
+                $("#hand-error").text("");
+                return true;
+            }
+        }
+
+        function validateCapacity() {
+            const capacity = $("#capacity_Engine").val();
+            if (isNaN(capacity) || capacity < 500 || capacity > 10000) {
+                $("#capacity-error").text("אנא הזן נפח מנוע תקין בין 500 ל-10000 סמ״ק.");
+                return false;
+            } else {
+                $("#capacity-error").text("");
+                return true;
+            }
+        }
+
+        function validateKm() {
+            const km = $("#km").val();
+            if (isNaN(km) || km < 0) {
+                $("#km-error").text("אנא הזן קילומטרז׳ תקין.");
+                return false;
+            } else {
+                $("#km-error").text("");
+                return true;
+            }
+        }
+
+        function validateForm() {
+            const isValidYear = validateYear();
+            const isValidHand = validateHand();
+            const isValidCapacity = validateCapacity();
+            const isValidKm = validateKm();
+            return isValidYear && isValidHand && isValidCapacity && isValidKm;
+        }
+
+        $(function() {
+            autocompleteInput("manufactor", Object.keys(modelsByManufacturer));
+
+            $("#manufactor").on("autocompleteselect", function(event, ui) {
+                const selectedManufacturer = ui.item.value;
+                autocompleteInput("model", modelsByManufacturer[selectedManufacturer] || []);
+            });
+
+            $("#model").focus(function() {
+                const selectedManufacturer = $("#manufactor").val();
+                const models = modelsByManufacturer[selectedManufacturer] || [];
+                autocompleteInput("model", models);
+            });
+
+            $("#year").on("input", validateYear);
+            $("#hand").on("input", validateHand);
+            $("#capacity_Engine").on("input", validateCapacity);
+            $("#km").on("input", validateKm);
+
+            $("form").on("submit", function(event) {
+                if (!validateForm()) {
+                    event.preventDefault();
+                } else {
+                    // Show the loading animation
+                    $("#loading-animation").show();
+
+                    // Simulate a minimum 1-second wait before displaying the result
+                    setTimeout(function() {
+                        // Hide the animation and show the prediction result
+                        $("#loading-animation").hide();
+
+                        // Show the predicted price (this would be done after the model returns the result)
+                        $("h3").show(); 
+                    }, 1000); 
+                }
+            });
+
+            $("input[type='radio']").each(function() {
+                const inputName = $(this).attr("name");
+                const savedValue = localStorage.getItem(inputName);
+                if (savedValue && $(this).val() === savedValue) {
+                    $(this).prop("checked", true);
+                }
+
+                $(this).on("change", function() {
+                    localStorage.setItem(inputName, $(this).val());
+                });
+            });
+        });
+    </script>
+</body>
+</html>
